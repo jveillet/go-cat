@@ -21,10 +21,16 @@ var rootCmd = &cobra.Command{
 	Use:   "go-cat [OPTIONS]... [FILE]...",
 	Short: "Concatenate FILE(s) to standard output",
 	Long:  `With no FILE, or when FILE is -, read standard input.`,
-	Args:  cobra.MinimumNArgs(1),
+	Args:  cobra.MinimumNArgs(0),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := readFile(args[0], os.Stdout, number); err != nil {
-			return err
+		if len(args) == 0 || args[0] == "-" {
+			if err := readStandardInput(); err != nil {
+				return err
+			}
+		} else {
+			if err := readFile(args[0], os.Stdout, number); err != nil {
+				return err
+			}
 		}
 
 		return nil
@@ -82,6 +88,21 @@ func readFile(filePath string, writer io.Writer, displayNumbers bool) error {
 		if err := scanner.Err(); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+// Read from the standard OS input (STDIN) and write back to the standard OS output (STDOUT)
+// More info on why this function exists in the original `cat` unix command:
+// https://retrocomputing.stackexchange.com/questions/26641/why-does-cat-with-no-argument-read-from-standard-input
+func readStandardInput() error {
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		fmt.Println(scanner.Text()) // Println will add back the final '\n'
+	}
+	if err := scanner.Err(); err != nil {
+		return err
 	}
 
 	return nil
