@@ -40,6 +40,14 @@ Flags:
   -n, --number   number all output lines
 ```
 
+## Tests
+
+Tests can be executed by using the command:
+
+```sh
+go test -v ./...
+```
+
 ## Acknowledgements
 
 This project uses [cobra](https://github.com/spf13/cobra/) to handle command line arguments.

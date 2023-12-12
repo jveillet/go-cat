@@ -7,11 +7,13 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/spf13/cobra"
 )
 
+// Holds the value of the -n command option
 var number bool
 
 // rootCmd represents the base command when called without any subcommands
@@ -21,7 +23,7 @@ var rootCmd = &cobra.Command{
 	Long:  `With no FILE, or when FILE is -, read standard input.`,
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := readFile(args[0]); err != nil {
+		if err := readFile(args[0], os.Stdout, number); err != nil {
 			return err
 		}
 
@@ -50,9 +52,8 @@ func init() {
 	rootCmd.Flags().BoolVarP(&number, "number", "n", false, "number all output lines")
 }
 
-// Read a file on disk, then display its content in the standard output.
-// Example: readFile("myfile.txt")
-func readFile(filePath string) error {
+// Read a file on disk, then display its content in a data stream (example Stdout).
+func readFile(filePath string, writer io.Writer, displayNumbers bool) error {
 	if _, err := os.Stat(filePath); errors.Is(err, os.ErrNotExist) {
 		return err
 	} else {
@@ -68,12 +69,12 @@ func readFile(filePath string) error {
 		var line int = 1
 		for scanner.Scan() {
 			// If the command line argument -n is given to the command
-			// Prints the line number + <TAB> + line content + CR + LF
-			if number {
-				fmt.Printf("%d\t%s\n\r", line, scanner.Text())
+			// Prints the line number + <TAB> + line content + <LF>
+			if displayNumbers {
+				fmt.Fprintf(writer, "%d\t%s\n", line, scanner.Text())
 			} else {
-				// Prints line content + CR + LF
-				fmt.Printf("%s\n\r", scanner.Text())
+				// Prints line content + <LF>
+				fmt.Fprintf(writer, "%s\n", scanner.Text())
 			}
 			line++
 		}
